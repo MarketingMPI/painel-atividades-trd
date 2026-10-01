@@ -236,7 +236,14 @@ const L = D.atrasadas;
 document.getElementById('t-late').innerHTML = L.length ? `<thead><tr><th>Negócio</th><th>Etapa</th><th>Atividade</th><th class="num">Venceu</th><th class="num">Atraso</th><th>Responsável</th></tr></thead><tbody>` +
   L.map(r => `<tr><td>${PD(r.deal_id, r.titulo)}</td><td>${r.etapa}</td><td>${r.atividade}</td><td class="num">${dt(r.vencimento)}</td><td class="num"><span class="pill p-late">${r.dias_atraso} d</span></td><td>${r.responsavel_negocio}</td></tr>`).join('') + '</tbody>'
   : '<tbody><tr><td class="empty">Nenhuma atividade atrasada.</td></tr></tbody>';
-const N = D.leads_recentes_7_dias;
+const generatedAt = Date.parse(D.gerado_em);
+const cutoffRecent = generatedAt - 7 * 24 * 60 * 60 * 1000;
+const N = (D.leads_recentes_7_dias || [])
+  .filter(r => {
+    const createdAt = Date.parse(r.criado_em);
+    return Number.isFinite(createdAt) && createdAt >= cutoffRecent && createdAt <= generatedAt;
+  })
+  .sort((a, b) => Date.parse(b.criado_em) - Date.parse(a.criado_em));
 const statusClass = s => s === 'Perdido' ? 'p-lost' : s === 'Ganho' ? 'p-won' : 'p-open';
 document.getElementById('t-recent').innerHTML = N.length ? `<thead><tr><th>Negócio</th><th>Etapa</th><th>Status</th><th class="num">Criado em</th><th class="num">Quando</th><th>Responsável</th></tr></thead><tbody>` +
   N.map(r => `<tr><td>${PD(r.deal_id, r.titulo)}</td><td>${ESC(r.etapa)}</td><td><span class="pill ${statusClass(r.status)}">${ESC(r.status)}</span></td><td class="num">${dtm(r.criado_em)}</td><td class="num">${r.dias_desde_criacao === 0 ? '<span class="pill p-today">hoje</span>' : `<span class="pill p-next">há ${r.dias_desde_criacao} d</span>`}</td><td>${ESC(r.responsavel)}</td></tr>`).join('') + '</tbody>'
